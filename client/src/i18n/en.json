@@ -1,0 +1,41 @@
+{
+  "app": {
+    "title": "BookShelf",
+    "logout": "Logout"
+  },
+  "auth": {
+    "title": "Sign In",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "sendCode": "Send Code",
+    "codeSent": "Verification code sent!",
+    "code": "Verification Code",
+    "codePlaceholder": "Enter 6-digit code",
+    "verify": "Verify & Sign In"
+  },
+  "search": {
+    "title": "Search Books",
+    "placeholder": "Search by book title...",
+    "button": "Search",
+    "noResults": "No books found",
+    "addToLibrary": "Add to Library",
+    "added": "Added!",
+    "by": "by"
+  },
+  "library": {
+    "title": "My Books",
+    "empty": "Your library is empty. Search for books to add!",
+    "all": "All",
+    "read": "Read",
+    "wantToRead": "Want to Read",
+    "favorite": "Favorites",
+    "markRead": "Read",
+    "markWantToRead": "Want to Read",
+    "markFavorite": "Favorite",
+    "remove": "Remove"
+  },
+  "nav": {
+    "search": "Search",
+    "library": "My Books"
+  }
+}
