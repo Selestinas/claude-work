@@ -5,14 +5,15 @@ let transporter;
 async function getTransporter() {
   if (transporter) return transporter;
 
-  if (process.env.EMAIL_USER && process.env.EMAIL_USER !== 'your_email@gmail.com') {
+  if (process.env.EMAIL_USER && process.env.GMAIL_CLIENT_ID) {
     transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT,
-      secure: process.env.EMAIL_PORT === '465',
+      service: 'gmail',
       auth: {
+        type: 'OAuth2',
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        clientId: process.env.GMAIL_CLIENT_ID,
+        clientSecret: process.env.GMAIL_CLIENT_SECRET,
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
       },
     });
   }
@@ -34,6 +35,9 @@ async function sendVerificationCode(email, code) {
         <p>This code expires in 10 minutes.</p>
       `,
     });
+    console.log(`Verification code sent to ${email}`);
+  } else {
+    console.log('Email not configured, printing code to console only');
   }
 
   // Always log to console in development
