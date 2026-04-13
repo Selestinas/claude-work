@@ -28,11 +28,11 @@ router.get('/', async (req, res) => {
 // Add book to user's library
 router.post('/', async (req, res) => {
   try {
-    const { openLibraryKey, title, author, coverId, firstPublishYear, status } = req.body;
+    const { openLibraryKey, title, author, coverId, firstPublishYear, description, status } = req.body;
 
     let book = await Book.findOne({ where: { openLibraryKey } });
     if (!book) {
-      book = await Book.create({ openLibraryKey, title, author, coverId, firstPublishYear });
+      book = await Book.create({ openLibraryKey, title, author, coverId, firstPublishYear, description });
     }
 
     const existing = await UserBook.findOne({
@@ -55,10 +55,10 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Update book status
+// Update book status or rating
 router.put('/:id', async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, rating } = req.body;
     const userBook = await UserBook.findOne({
       where: { id: req.params.id, UserId: req.userId },
     });
@@ -67,7 +67,10 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Book not found in your library' });
     }
 
-    await userBook.update({ status });
+    const updates = {};
+    if (status) updates.status = status;
+    if (rating !== undefined) updates.rating = rating;
+    await userBook.update(updates);
     res.json(userBook);
   } catch (error) {
     console.error('Update book error:', error);

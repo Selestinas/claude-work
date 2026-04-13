@@ -51,7 +51,7 @@ function SearchPage() {
         </button>
       </form>
 
-      {loading && <div className="loading">Loading...</div>}
+      {loading && <div className="loading">{t('search.loading')}</div>}
 
       {!loading && books.length === 0 && query && (
         <p className="no-results">{t('search.noResults')}</p>
@@ -63,7 +63,10 @@ function SearchPage() {
             {book.coverUrl ? (
               <img src={book.coverUrl} alt={book.title} className="book-cover" />
             ) : (
-              <div className="book-cover-placeholder">No Cover</div>
+              <div className="book-cover-placeholder">{t('search.noCover')}</div>
+            )}
+            {book.description && (
+              <p className="book-description">{book.description}</p>
             )}
             <div className="book-info">
               <h3 className="book-title">{book.title}</h3>
@@ -88,10 +91,14 @@ function SearchPage() {
       {total > 20 && (
         <div className="pagination">
           {page > 1 && (
-            <button onClick={() => handleSearch(null, page - 1)}>Prev</button>
+            <button onClick={() => handleSearch(null, page - 1)}>
+              {t('search.prev')}
+            </button>
           )}
-          <span>Page {page}</span>
-          <button onClick={() => handleSearch(null, page + 1)}>Next</button>
+          <span>{t('search.page')} {page}</span>
+          <button onClick={() => handleSearch(null, page + 1)}>
+            {t('search.next')}
+          </button>
         </div>
       )}
     </div>

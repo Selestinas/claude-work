@@ -15,12 +15,17 @@
   },
   "search": {
     "title": "Search Books",
-    "placeholder": "Search by book title...",
+    "placeholder": "Search by title or author...",
     "button": "Search",
     "noResults": "No books found",
     "addToLibrary": "Add to Library",
     "added": "Added!",
-    "by": "by"
+    "by": "by",
+    "noCover": "No Cover",
+    "loading": "Loading...",
+    "prev": "Prev",
+    "next": "Next",
+    "page": "Page"
   },
   "library": {
     "title": "My Books",

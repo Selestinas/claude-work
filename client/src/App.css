@@ -236,6 +236,20 @@ body {
   font-size: 1rem;
 }
 
+/* Book description */
+.book-description {
+  padding: 0.75rem 1rem;
+  color: #555;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  border-top: 1px solid #eee;
+  max-height: 80px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
 .book-info {
   padding: 1rem;
   display: flex;
@@ -292,6 +306,30 @@ body {
 .added-badge {
   color: #27ae60;
   font-weight: 600;
+}
+
+/* Star rating */
+.star-rating {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.star-filled {
+  color: #f5a623;
+}
+
+.star-empty {
+  color: #ddd;
+}
+
+.star:hover {
+  transform: scale(1.2);
 }
 
 /* Status badges */

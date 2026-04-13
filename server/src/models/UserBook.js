@@ -14,6 +14,11 @@ const UserBook = sequelize.define('UserBook', {
     allowNull: false,
     defaultValue: 'want-to-read',
   },
+  rating: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    validate: { min: 1, max: 5 },
+  },
 });
 
 User.belongsToMany(Book, { through: UserBook });
