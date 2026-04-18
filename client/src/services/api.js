@@ -34,6 +34,7 @@ export const booksApi = {
 
 export const userBooksApi = {
   getAll: (status) => api.get('/user/books', { params: { status } }),
+  getStatuses: (keys) => api.post('/user/books/statuses', { keys }),
   add: (book) => api.post('/user/books', book),
   updateStatus: (id, status) => api.put(`/user/books/${id}`, { status }),
   updateRating: (id, rating) => api.put(`/user/books/${id}`, { rating }),

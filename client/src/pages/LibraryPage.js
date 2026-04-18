@@ -1,6 +1,37 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { userBooksApi } from '../services/api';
+
+function BookDescription({ text }) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const textRef = useRef(null);
+
+  useEffect(() => {
+    if (textRef.current) {
+      setIsOverflowing(textRef.current.scrollHeight > textRef.current.clientHeight);
+    }
+  }, [text]);
+
+  if (!text) return null;
+
+  return (
+    <div className="book-description-wrap">
+      <p ref={textRef} className={`book-description ${expanded ? 'expanded' : ''}`}>
+        {text}
+      </p>
+      {isOverflowing && (
+        <button
+          className="btn-expand"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? t('search.showLess') : t('search.showMore')}
+        </button>
+      )}
+    </div>
+  );
+}
 
 function StarRating({ rating, onRate }) {
   const [hover, setHover] = useState(0);
@@ -113,9 +144,7 @@ function LibraryPage() {
             ) : (
               <div className="book-cover-placeholder">{t('search.noCover')}</div>
             )}
-            {ub.Book?.description && (
-              <p className="book-description">{ub.Book.description}</p>
-            )}
+            <BookDescription text={ub.Book?.description} />
             <div className="book-info">
               <h3 className="book-title">{ub.Book?.title}</h3>
               <p className="book-author">{ub.Book?.author}</p>

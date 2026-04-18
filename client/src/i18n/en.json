@@ -20,12 +20,19 @@
     "noResults": "No books found",
     "addToLibrary": "Add to Library",
     "added": "Added!",
+    "addedToLibrary": "Book added to library!",
+    "removedFromLibrary": "Book removed from library",
     "by": "by",
     "noCover": "No Cover",
     "loading": "Loading...",
     "prev": "Prev",
     "next": "Next",
-    "page": "Page"
+    "page": "Page",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "read": "Reading",
+    "wantToRead": "Want to Read",
+    "favorite": "Favorite"
   },
   "library": {
     "title": "My Books",

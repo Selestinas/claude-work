@@ -25,13 +25,45 @@ router.get('/', async (req, res) => {
   }
 });
 
+function cleanDescription(text) {
+  if (!text) return null;
+  let clean = text
+    .replace(/\[source\].*$/s, '')
+    .replace(/----------.*/s, '')
+    .replace(/Also contained in:?.*/s, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .trim();
+  return clean || null;
+}
+
+// Fetch description from Open Library Works API
+async function fetchDescription(openLibraryKey) {
+  try {
+    const url = `https://openlibrary.org${openLibraryKey}.json`;
+    const response = await fetch(url);
+    const data = await response.json();
+    if (data.description) {
+      const raw = typeof data.description === 'string'
+        ? data.description
+        : data.description.value || null;
+      return cleanDescription(raw);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // Add book to user's library
 router.post('/', async (req, res) => {
   try {
-    const { openLibraryKey, title, author, coverId, firstPublishYear, description, status } = req.body;
+    const { openLibraryKey, title, author, coverId, firstPublishYear, status } = req.body;
 
     let book = await Book.findOne({ where: { openLibraryKey } });
     if (!book) {
+      console.log('Fetching description for:', openLibraryKey);
+      const description = await fetchDescription(openLibraryKey);
+      console.log('Description result:', description ? description.substring(0, 100) : 'null');
       book = await Book.create({ openLibraryKey, title, author, coverId, firstPublishYear, description });
     }
 
@@ -52,6 +84,34 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Add book error:', error);
     res.status(500).json({ error: 'Failed to add book' });
+  }
+});
+
+// Get statuses of books by openLibraryKeys
+router.post('/statuses', async (req, res) => {
+  try {
+    const { keys } = req.body;
+    if (!keys || !keys.length) return res.json({});
+
+    const books = await Book.findAll({
+      where: { openLibraryKey: keys },
+    });
+
+    const bookIds = books.map((b) => b.id);
+    const userBooks = await UserBook.findAll({
+      where: { UserId: req.userId, BookId: bookIds },
+      include: [{ model: Book, attributes: ['openLibraryKey'] }],
+    });
+
+    const statuses = {};
+    userBooks.forEach((ub) => {
+      statuses[ub.Book.openLibraryKey] = { id: ub.id, status: ub.status };
+    });
+
+    res.json(statuses);
+  } catch (error) {
+    console.error('Get statuses error:', error);
+    res.status(500).json({ error: 'Failed to get statuses' });
   }
 });
 
