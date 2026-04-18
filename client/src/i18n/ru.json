@@ -32,7 +32,8 @@
     "showLess": "Свернуть",
     "read": "Читаю",
     "wantToRead": "Хочу прочитать",
-    "favorite": "Избранное"
+    "favorite": "Избранное",
+    "recentSearches": "Недавние запросы"
   },
   "library": {
     "title": "Мои книги",

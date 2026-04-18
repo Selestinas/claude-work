@@ -81,4 +81,32 @@ router.get('/search', authMiddleware, async (req, res) => {
   }
 });
 
+// Quick suggest (lightweight, no descriptions)
+router.get('/suggest', authMiddleware, async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.length < 1) {
+      return res.json([]);
+    }
+
+    const url = `${OPEN_LIBRARY_SEARCH}?q=${encodeURIComponent(q)}&limit=5&fields=key,title,author_name,cover_i,first_publish_year`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    const suggestions = (data.docs || []).map((doc) => ({
+      openLibraryKey: doc.key,
+      title: doc.title,
+      author: doc.author_name ? doc.author_name.join(', ') : 'Unknown',
+      coverUrl: doc.cover_i
+        ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-S.jpg`
+        : null,
+    }));
+
+    res.json(suggestions);
+  } catch (error) {
+    console.error('Suggest error:', error);
+    res.json([]);
+  }
+});
+
 module.exports = router;

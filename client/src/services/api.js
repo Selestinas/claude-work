@@ -30,6 +30,7 @@ export const authApi = {
 
 export const booksApi = {
   search: (q, page = 1) => api.get('/books/search', { params: { q, page } }),
+  suggest: (q) => api.get('/books/suggest', { params: { q } }),
 };
 
 export const userBooksApi = {

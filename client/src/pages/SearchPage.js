@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { booksApi, userBooksApi } from '../services/api';
 
@@ -33,6 +33,22 @@ function BookDescription({ text }) {
   );
 }
 
+const RECENT_SEARCHES_KEY = 'bookshelf_recent_searches';
+
+function getRecentSearches() {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentSearch(query) {
+  const recent = getRecentSearches().filter((q) => q !== query);
+  recent.unshift(query);
+  localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recent.slice(0, 5)));
+}
+
 function SearchPage() {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
@@ -42,6 +58,14 @@ function SearchPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [toast, setToast] = useState(null);
+
+  // Suggestions & dropdown
+  const [suggestions, setSuggestions] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [recentSearches, setRecentSearches] = useState(getRecentSearches());
+  const dropdownRef = useRef(null);
+  const inputRef = useRef(null);
+  const debounceRef = useRef(null);
 
   const showToast = (message) => {
     setToast(message);
@@ -54,6 +78,54 @@ function SearchPage() {
     { key: 'favorite', label: t('search.favorite') },
   ];
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+          inputRef.current && !inputRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Debounced suggestions
+  const fetchSuggestions = useCallback(async (value) => {
+    if (value.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    try {
+      const { data } = await booksApi.suggest(value);
+      setSuggestions(data);
+    } catch {
+      setSuggestions([]);
+    }
+  }, []);
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    setShowDropdown(true);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 300);
+  };
+
+  const handleInputFocus = () => {
+    setShowDropdown(true);
+    setRecentSearches(getRecentSearches());
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    setSuggestions([]);
+    inputRef.current?.focus();
+  };
+
   const fetchStatuses = async (booksList) => {
     try {
       const keys = booksList.map((b) => b.openLibraryKey);
@@ -64,12 +136,17 @@ function SearchPage() {
     }
   };
 
-  const handleSearch = async (e, searchPage = 1) => {
+  const handleSearch = async (e, searchPage = 1, searchQuery) => {
     if (e) e.preventDefault();
-    if (!query.trim()) return;
+    const q = searchQuery || query;
+    if (!q.trim()) return;
+    setShowDropdown(false);
+    setSuggestions([]);
     setLoading(true);
+    saveRecentSearch(q);
+    setRecentSearches(getRecentSearches());
     try {
-      const { data } = await booksApi.search(query, searchPage);
+      const { data } = await booksApi.search(q, searchPage);
       setBooks(data.books);
       setTotal(data.total);
       setPage(searchPage);
@@ -81,11 +158,23 @@ function SearchPage() {
     }
   };
 
+  const handleSuggestionClick = (title) => {
+    setQuery(title);
+    setShowDropdown(false);
+    setSuggestions([]);
+    handleSearch(null, 1, title);
+  };
+
+  const handleRecentClick = (q) => {
+    setQuery(q);
+    setShowDropdown(false);
+    handleSearch(null, 1, q);
+  };
+
   const handleToggle = async (book, status) => {
     const existing = bookStatuses[book.openLibraryKey];
 
     if (existing && existing.status === status) {
-      // Remove from library
       try {
         await userBooksApi.remove(existing.id);
         setBookStatuses((prev) => {
@@ -98,7 +187,6 @@ function SearchPage() {
         console.error('Remove failed:', err);
       }
     } else if (existing) {
-      // Change status
       try {
         await userBooksApi.updateStatus(existing.id, status);
         setBookStatuses((prev) => ({
@@ -110,7 +198,6 @@ function SearchPage() {
         console.error('Update failed:', err);
       }
     } else {
-      // Add to library
       try {
         const { data } = await userBooksApi.add({ ...book, status });
         setBookStatuses((prev) => ({
@@ -124,17 +211,65 @@ function SearchPage() {
     }
   };
 
+  const showRecent = showDropdown && !query && recentSearches.length > 0;
+  const showSuggestions = showDropdown && query && suggestions.length > 0;
+
   return (
     <div className="search-page">
       {toast && <div className="toast">{toast}</div>}
       <h2>{t('search.title')}</h2>
       <form className="search-form" onSubmit={handleSearch}>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t('search.placeholder')}
-        />
+        <div className="search-input-wrap">
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={handleInputChange}
+            onFocus={handleInputFocus}
+            placeholder={t('search.placeholder')}
+          />
+          {query && (
+            <button type="button" className="btn-clear" onClick={handleClear}>
+              &times;
+            </button>
+          )}
+
+          {showRecent && (
+            <div className="search-dropdown" ref={dropdownRef}>
+              <div className="dropdown-header">{t('search.recentSearches')}</div>
+              {recentSearches.map((q, i) => (
+                <div
+                  key={i}
+                  className="dropdown-item dropdown-recent"
+                  onClick={() => handleRecentClick(q)}
+                >
+                  <span className="dropdown-icon">&#128339;</span>
+                  {q}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {showSuggestions && (
+            <div className="search-dropdown" ref={dropdownRef}>
+              {suggestions.map((s) => (
+                <div
+                  key={s.openLibraryKey}
+                  className="dropdown-item dropdown-suggestion"
+                  onClick={() => handleSuggestionClick(s.title)}
+                >
+                  {s.coverUrl && (
+                    <img src={s.coverUrl} alt="" className="dropdown-cover" />
+                  )}
+                  <div className="dropdown-text">
+                    <span className="dropdown-title">{s.title}</span>
+                    <span className="dropdown-author">{s.author}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <button type="submit" disabled={loading}>
           {t('search.button')}
         </button>
